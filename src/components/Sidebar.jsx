@@ -4,7 +4,7 @@ import { NAV_ITEMS } from '../data/mockData';
 
 export default function Sidebar({ page, setPage }) {
   return (
-    <div style={{ width: 232, minWidth: 232, height: '100vh', background: COLORS.surface, borderLeft: `0.5px solid ${COLORS.border}`, display: 'flex', flexDirection: 'column', position: 'sticky', top: 0 }}>
+    <div style={{ width: 232, minWidth: 232, height: '100vh', background: COLORS.bg, borderLeft: `0.5px solid ${COLORS.border}`, display: 'flex', flexDirection: 'column', position: 'sticky', top: 0 }}>
       <div style={{ padding: '22px 20px 18px', borderBottom: `0.5px solid ${COLORS.border}` }}>
         <div style={{ fontSize: 19, fontWeight: 700 }}>انبار</div>
         <div style={{ fontSize: 11.5, color: COLORS.text3, marginTop: 2 }}>سیستم مدیریت</div>

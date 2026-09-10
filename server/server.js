@@ -69,7 +69,35 @@ app.post("/products", (req, res) => {
         }
     );
 });
+// گرفتن دسته بندی ها
+app.get("/categories", (req, res) => {
+    const sql = "SELECT * FROM categories";
 
+    db.query(sql, (err, result) => {
+        if (err) {
+            return res.status(500).json({
+                error: err.message
+            });
+        }
+
+        res.json(result);
+    });
+});
+
+// گرفتن تامین کننده ها
+app.get("/suppliers", (req, res) => {
+    const sql = "SELECT * FROM suppliers";
+
+    db.query(sql, (err, result) => {
+        if (err) {
+            return res.status(500).json({
+                error: err.message
+            });
+        }
+
+        res.json(result);
+    });
+});
 app.listen(5000, () => {
     console.log("Server running on port 5000");
 });

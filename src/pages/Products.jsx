@@ -8,6 +8,8 @@ import PageHeader from '../components/PageHeader';
 export default function Products() {
   const [q, setQ] = useState('');
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
   const [form, setForm] = useState({
@@ -18,7 +20,7 @@ export default function Products() {
     price: ''
   });
 
-  // گرفتن محصولات از دیتابیس
+  // گرفتن محصولات
   const loadProducts = async () => {
     try {
       const response = await fetch('http://localhost:5000/products');
@@ -29,11 +31,36 @@ export default function Products() {
     }
   };
 
+  // گرفتن دسته بندی ها
+  const loadCategories = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/categories');
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
+  // گرفتن تامین کننده ها
+  const loadSuppliers = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/suppliers');
+      const data = await response.json();
+      setSuppliers(data);
+    } catch (error) {
+      console.error('Error loading suppliers:', error);
+    }
+  };
+
+  // هنگام باز شدن صفحه
   useEffect(() => {
     loadProducts();
+    loadCategories();
+    loadSuppliers();
   }, []);
 
-  // تغییر مقادیر فرم
+  // تغییر فرم
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -41,7 +68,7 @@ export default function Products() {
     });
   };
 
-  // افزودن محصول
+  // اضافه کردن محصول
   const handleAddProduct = async (e) => {
     e.preventDefault();
 
@@ -53,8 +80,8 @@ export default function Products() {
         },
         body: JSON.stringify({
           name: form.name,
-          category_id: form.category_id || null,
-          supplier_id: form.supplier_id || null,
+          category_id: Number(form.category_id),
+          supplier_id: Number(form.supplier_id),
           quantity: Number(form.quantity),
           price: Number(form.price)
         })
@@ -67,10 +94,10 @@ export default function Products() {
         return;
       }
 
-      alert('محصول با موفقیت اضافه شد');
-
+      // بستن پنجره
       setShowModal(false);
 
+      // خالی کردن فرم
       setForm({
         name: '',
         category_id: '',
@@ -79,7 +106,8 @@ export default function Products() {
         price: ''
       });
 
-      loadProducts();
+      // دوباره گرفتن محصولات از دیتابیس
+      await loadProducts();
 
     } catch (error) {
       console.error(error);
@@ -87,10 +115,8 @@ export default function Products() {
     }
   };
 
-  const filtered = products.filter(
-    (p) =>
-      p.name?.includes(q) ||
-      String(p.category_id || '').includes(q)
+  const filtered = products.filter((p) =>
+    p.name?.toLowerCase().includes(q.toLowerCase())
   );
 
   return (
@@ -122,6 +148,7 @@ export default function Products() {
         }
       />
 
+      {/* جستجو */}
       <div
         style={{
           display: 'flex',
@@ -140,7 +167,7 @@ export default function Products() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="جستجوی نام یا دسته‌بندی..."
+          placeholder="جستجوی نام محصول..."
           style={{
             background: 'transparent',
             border: 'none',
@@ -153,6 +180,7 @@ export default function Products() {
         />
       </div>
 
+      {/* جدول محصولات */}
       <Card style={{ overflow: 'hidden' }}>
         <table
           style={{
@@ -163,28 +191,42 @@ export default function Products() {
         >
           <thead>
             <tr style={{ background: COLORS.surface2 }}>
-              {['کالا', 'دسته‌بندی', 'موجودی', 'قیمت واحد', 'وضعیت'].map(
-                (h) => (
-                  <th
-                    key={h}
-                    style={{
-                      textAlign: 'right',
-                      padding: '11px 16px',
-                      color: COLORS.text2,
-                      fontWeight: 500,
-                      fontSize: 12
-                    }}
-                  >
-                    {h}
-                  </th>
-                )
-              )}
+              {[
+                'شناسه',
+                'کالا',
+                'دسته‌بندی',
+                'تأمین‌کننده',
+                'موجودی',
+                'قیمت واحد',
+                'وضعیت'
+              ].map((h) => (
+                <th
+                  key={h}
+                  style={{
+                    textAlign: 'right',
+                    padding: '11px 16px',
+                    color: COLORS.text2,
+                    fontWeight: 500,
+                    fontSize: 12
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
 
           <tbody>
             {filtered.map((p) => {
               const low = p.quantity <= 5;
+
+              const category = categories.find(
+                (c) => c.id === p.category_id
+              );
+
+              const supplier = suppliers.find(
+                (s) => s.id === p.supplier_id
+              );
 
               return (
                 <tr
@@ -193,11 +235,11 @@ export default function Products() {
                     borderTop: `0.5px solid ${COLORS.border}`
                   }}
                 >
-                  <td
-                    style={{
-                      padding: '11px 16px'
-                    }}
-                  >
+                  <td style={{ padding: '11px 16px' }}>
+                    {p.id}
+                  </td>
+
+                  <td style={{ padding: '11px 16px' }}>
                     {p.name}
                   </td>
 
@@ -207,7 +249,16 @@ export default function Products() {
                       color: COLORS.text2
                     }}
                   >
-                    {p.category_id}
+                    {category?.name || p.category_id}
+                  </td>
+
+                  <td
+                    style={{
+                      padding: '11px 16px',
+                      color: COLORS.text2
+                    }}
+                  >
+                    {supplier?.name || p.supplier_id}
                   </td>
 
                   <td style={{ padding: '11px 16px' }}>
@@ -258,7 +309,7 @@ export default function Products() {
               direction: 'rtl'
             }}
           >
-            {/* عنوان */}
+            {/* عنوان پنجره */}
             <div
               style={{
                 display: 'flex',
@@ -303,27 +354,44 @@ export default function Products() {
               />
 
               {/* دسته بندی */}
-              <input
+              <select
                 name="category_id"
                 value={form.category_id}
                 onChange={handleChange}
-                placeholder="شناسه دسته‌بندی"
+                required
                 style={inputStyle}
-              />
+              >
+                <option value="">انتخاب دسته‌بندی</option>
+
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
 
               {/* تامین کننده */}
-              <input
+              <select
                 name="supplier_id"
                 value={form.supplier_id}
                 onChange={handleChange}
-                placeholder="شناسه تأمین‌کننده"
+                required
                 style={inputStyle}
-              />
+              >
+                <option value="">انتخاب تأمین‌کننده</option>
+
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </option>
+                ))}
+              </select>
 
               {/* موجودی */}
               <input
                 name="quantity"
                 type="number"
+                min="0"
                 value={form.quantity}
                 onChange={handleChange}
                 placeholder="موجودی"
@@ -335,6 +403,7 @@ export default function Products() {
               <input
                 name="price"
                 type="number"
+                min="0"
                 value={form.price}
                 onChange={handleChange}
                 placeholder="قیمت"
@@ -342,6 +411,7 @@ export default function Products() {
                 style={inputStyle}
               />
 
+              {/* ذخیره */}
               <button
                 type="submit"
                 style={{
